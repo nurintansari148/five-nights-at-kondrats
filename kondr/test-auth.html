@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест авторизации</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: #fff;
+            padding: 50px;
+        }
+        .form {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #666;
+            background: #444;
+            color: #fff;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            background: #f44;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #c00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест кнопок авторизации</h1>
+    
+    <div class="form">
+        <h2>Вход</h2>
+        <input type="text" id="loginUsername" placeholder="Имя пользователя">
+        <input type="password" id="loginPassword" placeholder="Пароль">
+        <button onclick="testLogin()">Войти</button>
+    </div>
+    
+    <div class="form" style="margin-top: 20px;">
+        <h2>Регистрация</h2>
+        <input type="text" id="registerUsername" placeholder="Имя пользователя">
+        <input type="password" id="registerPassword" placeholder="Пароль">
+        <input type="password" id="registerPasswordConfirm" placeholder="Повтори пароль">
+        <button onclick="testRegister()">Зарегистрироваться</button>
+    </div>
+
+    <script>
+        function testLogin() {
+            console.log('testLogin вызвана!');
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            alert('Вход: ' + username + ' / ' + password);
+        }
+
+        function testRegister() {
+            console.log('testRegister вызвана!');
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('registerPasswordConfirm').value;
+            alert('Регистрация: ' + username + ' / ' + password + ' / ' + confirm);
+        }
+
+        console.log('Скрипт загружен!');
+    </script>
+</body>
+</html>

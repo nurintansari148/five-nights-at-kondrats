@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Five Nights at Kondrat's v2.1</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+}
+
+/* фикс масштабирования */
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* экраны */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 10;
+}
+
+.screen.active {
+    display: block;
+}
+
+.screen.overlay {
+    background: #000;
+    z-index: 100;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen.overlay.active {
+    display: flex;
+}
+
+/* авторизация */
+#authScreen {
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-container {
+    background: linear-gradient(180deg, #1a0000 0%, #0a0a0a 100%);
+    padding: 50px;
+    border-radius: 5px;
+    border: 3px solid #8b0000;
+    box-shadow: 0 0 30px rgba(139, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    text-align: center;
+    min-width: 380px;
+    max-width: 450px;
+}
+
+.auth-container h1 {
+    color: #ff4444;
+    font-size: 32px;
+    margin-bottom: 35px;
+    text-shadow: 0 0 15px rgba(255, 68, 68, 0.8), 3px 3px 6px rgba(0, 0, 0, 0.9);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    animation: titleGlow 2s ease-in-out infinite;
+}
+
+.auth-container h2 {
+    font-size: 22px;
+    margin-bottom: 25px;
+    color: #ff6666;
+    text-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
+}
+
+.auth-container input {
+    width: 100%;
+    padding: 14px;
+    margin: 12px 0;
+    border: 2px solid #4a0000;
+    border-radius: 3px;
+    background: #0a0a0a;
+    color: #fff;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.auth-container input:focus {
+    outline: none;
+    border-color: #ff0000;
+    background: #1a0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.auth-container input::placeholder {
+    color: #666;
+}
+
+.auth-container button {
+    width: 100%;
+    padding: 15px;
+    margin: 15px 0;
+    border: 3px solid #8b0000;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #2a0000 0%, #1a0000 100%);
+    color: #ff6666;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 0 10px rgba(255, 100, 100, 0.8);
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
+}
+
+.auth-container button:hover {
+    background: linear-gradient(180deg, #4a0000 0%, #2a0000 100%);
+    border-color: #ff0000;
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+    transform: translateY(-2px);
+}
+
+.auth-container p {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+.link {
+    color: #ff4444;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.link:hover {
+    color: #ff6666;
+}
+
+/* меню */
+#menuScreen {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* стиль для fnaf 1 - мерцающий кондрат */
+#menuScreen.fnaf1-style {
+    background: #000;
+    position: relative;
+}
+
+#menuScreen.fnaf1-style::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 150%;
+    background-image: url('kondrat3.png');
+    background-size: contain;
+    background-position: center 60%;
+    background-repeat: no-repeat;
+    opacity: 0.25;
+    animation: glitchFlicker 0.3s infinite, shake 0.15s infinite;
+    z-index: 0;
+    transform: translateY(20%);
+}
+
+@keyframes glitchFlicker {
+    0%, 100% { opacity: 0.15; }
+    25% { opacity: 0.25; }
+    50% { opacity: 0.1; }
+    75% { opacity: 0.2; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-2px, 2px); }
+    50% { transform: translate(2px, -2px); }
+    75% { transform: translate(-1px, -1px); }
+}
+
+.menu-container {
+    text-align: center;
+    max-width: 600px;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.menu-container h1 {
+    color: #ff4444;
+    font-size: 42px;
+    margin-bottom: 20px;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 68, 68, 0.5);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    animation: titleGlow 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%, 100% { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 68, 68, 0.5); }
+    50% { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 68, 68, 0.8); }
+}
+
+#welcomeText {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+.night-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.night-btn {
+    padding: 18px 35px;
+    font-size: 20px;
+    font-weight: bold;
+    border: 3px solid #8b0000;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #2a0000 0%, #1a0000 100%);
+    color: #ff6666;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 140px;
+    text-shadow: 0 0 10px rgba(255, 100, 100, 0.8);
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.5), inset 0 0 10px rgba(255, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.night-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.night-btn:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.night-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #4a0000 0%, #2a0000 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(255, 68, 68, 0.8), inset 0 0 15px rgba(255, 0, 0, 0.2);
+    border-color: #ff0000;
+    color: #ff8888;
+}
+
+.night-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #333;
+    background: #0a0a0a;
+    color: #444;
+    text-shadow: none;
+    box-shadow: none;
+}
+
+.night-btn.completed {
+    background: linear-gradient(180deg, #002a00 0%, #001a00 100%);
+    border-color: #006600;
+    color: #66ff66;
+    border-color: #44ff44;
+}
+
+.night-btn.locked {
+    background: rgba(100, 100, 100, 0.2);
+}
+
+    .menu-hint {
+    font-size: 14px;
+    color: #999;
+    margin: 20px 0;
+    line-height: 1.6;
+}
+
+/* баланс монет */
+.coins-display {
+    font-size: 20px;
+    color: #ffd700;
+    margin: 15px 0;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    font-weight: bold;
+}
+
+.coin-icon {
+    font-size: 24px;
+    margin-right: 5px;
+}
+
+.menu-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.shop-btn {
+    padding: 12px 30px;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.shop-btn:hover {
+    background: rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+.logout-btn {
+    padding: 12px 30px;
+    border: 2px solid #666;
+    border-radius: 8px;
+    background: rgba(100, 100, 100, 0.3);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 16px;
+}
+
+.logout-btn:hover {
+    background: rgba(150, 150, 150, 0.3);
+    border-color: #999;
+}/* игровой экран */
+#gameScreen {
+    background: #000;
+    width: 100%;
+    height: 100%;
+}
+
+/* вид офиса - панорама */
+.office-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #1a1a1a 0%, #000000 100%);
+    overflow: hidden;
+    box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.9);
+    animation: flicker 8s infinite;
+}
+
+@keyframes flicker {
+    0%, 94%, 96%, 98%, 100% { 
+        filter: brightness(1); 
+    }
+    95% { 
+        filter: brightness(0.85); 
+    }
+    97% { 
+        filter: brightness(0.9); 
+    }
+    99% { 
+        filter: brightness(0.8); 
+    }
+}
+
+.office-panorama {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+}
+
+/* секции офиса */
+.office-section {
+    position: relative;
+    height: 100%;
+}
+
+.left-section {
+    flex: 1;
+    background: linear-gradient(to right, #0a0a0a 0%, #1a1a1a 100%);
+    border-right: 2px solid #222;
+}
+
+.center-section {
+    flex: 1.5;
+    background: linear-gradient(to bottom, #1a1a1a 0%, #0a0a0a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 50px;
+    position: relative;
+}
+
+/* офисные предметы для атмосферы */
+.office-props {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 40px;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.fan {
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, #1a1a1a 30%, #0a0a0a 100%);
+    border-radius: 50%;
+    border: 3px solid #444;
+    position: relative;
+    animation: fanRotate 3s linear infinite;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.8),
+        0 5px 10px rgba(0, 0, 0, 0.6);
+}
+
+.fan::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: #666;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.fan::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #555, transparent);
+    box-shadow: 0 0 0 4px #555;
+}
+
+@keyframes fanRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.desk-items {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.phone {
+    width: 35px;
+    height: 50px;
+    background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
+    border-radius: 4px 4px 8px 8px;
+    border: 2px solid #333;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+.phone::before {
+    content: '☎';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    color: #555;
+}
+
+.coffee {
+    width: 30px;
+    height: 40px;
+    background: linear-gradient(to bottom, #3a2a1a 0%, #1a0a0a 100%);
+    border-radius: 2px 2px 8px 8px;
+    border: 2px solid #4a3a2a;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+.coffee::before {
+    content: '☕';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    filter: brightness(0.7);
+}
+
+.right-section {
+    flex: 1;
+    background: linear-gradient(to left, #0a0a0a 0%, #1a1a1a 100%);
+    border-left: 2px solid #222;
+}
+
+/* дверные проемы */
+.doorway-frame {
+    position: absolute;
+    top: 5%;
+    width: 85%;
+    height: 80%;
+    border: 6px solid #333;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            #2a2a2a 0px,
+            #2a2a2a 8px,
+            #1a1a1a 8px,
+            #1a1a1a 16px
+        ),
+        linear-gradient(to bottom, #303030 0%, #050505 100%);
+    box-shadow: 
+        inset 0 0 80px rgba(0, 0, 0, 0.95),
+        0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+.doorway-frame.left-frame {
+    left: 10%;
+}
+
+.doorway-frame.right-frame {
+    right: 10%;
+}
+
+
+
+/* подсветка */
+.light-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.light-glow.left {
+    background: radial-gradient(circle at center, rgba(255, 255, 100, 0.5) 0%, transparent 60%);
+}
+
+.light-glow.right {
+    background: radial-gradient(circle at center, rgba(255, 255, 100, 0.5) 0%, transparent 60%);
+}
+
+/* кондрат у дверей */
+.kondrat-door {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 80%;
+    display: none;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 4;
+    filter: brightness(0.6) contrast(1.2);
+}
+
+/* декор центра (стол) */
+.desk {
+    width: 80%;
+    height: 40px;
+    background: linear-gradient(to bottom, #3a3a3a 0%, #2a2a2a 100%);
+    border-radius: 5px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.desk::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 10%;
+    width: 30%;
+    height: 3px;
+    background: #444;
+    border-radius: 2px;
+}
+
+.desk::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: 10%;
+    width: 30%;
+    height: 3px;
+    background: #444;
+    border-radius: 2px;
+}
+
+.monitor {
+    width: 50px;
+    height: 35px;
+    background: linear-gradient(to bottom, #1a1a1a 0%, #0a0a0a 100%);
+    border: 2px solid #333;
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.papers {
+    width: 60px;
+    height: 25px;
+    background: rgba(200, 200, 200, 0.1);
+    position: absolute;
+    bottom: 60px;
+    left: 30%;
+    transform: rotate(-5deg);
+    border: 1px solid #333;
+}
+
+/* игровой интерфейс */
+#gameUI {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#gameUI > * {
+    pointer-events: all;
+}
+
+/* статические помехи когда кондрат близко */
+.static-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(255, 255, 255, 0.05) 1px,
+        rgba(255, 255, 255, 0.05) 2px
+    );
+    animation: staticNoise 0.05s infinite, fadeInOut 2s infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes staticNoise {
+    0% { transform: translateY(0) translateX(0); opacity: 0.3; }
+    25% { transform: translateY(-2px) translateX(2px); opacity: 0.4; }
+    50% { transform: translateY(2px) translateX(-2px); opacity: 0.3; }
+    75% { transform: translateY(-1px) translateX(1px); opacity: 0.35; }
+    100% { transform: translateY(1px) translateX(-1px); opacity: 0.3; }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.5; }
+}
+
+/* HUD в стиле FNAF */
+.hud {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0;
+}
+
+.hud-left {
+    text-align: left;
+}
+
+.hud-center {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.hud-right {
+    text-align: right;
+}
+
+/* скрываем шкатулку в FNAF 1 */
+.music-box-indicator {
+    margin-top: 5px;
+}
+
+body[data-mode="fnaf1"] .music-box-indicator {
+    display: none !important;
+}
+
+/* показываем/скрываем элементы по режиму */
+.fnaf1-only {
+    display: block !important;
+}
+
+.fnaf2-only {
+    display: none !important;
+}
+
+body[data-mode="fnaf2"] .fnaf1-only {
+    display: none !important;
+}
+
+body[data-mode="fnaf2"] .fnaf2-only {
+    display: block !important;
+}
+
+/* контролы дверей FNAF 1 */
+.door-controls {
+    position: fixed;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 100;
+}
+
+.door-controls.left {
+    left: 20px;
+}
+
+.door-controls.right {
+    right: 20px;
+}
+
+.power-left {
+    font-size: 16px;
+}
+
+.power-usage {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* кнопка камер (внизу по центру) */
+.camera-toggle {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 40px;
+    background: rgba(0, 200, 0, 0.3);
+    border: 2px solid #0f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.camera-toggle:hover {
+    background: rgba(0, 255, 0, 0.5);
+    box-shadow: 0 0 10px #0f0;
+}
+
+.camera-icon {
+    color: #0f0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* зоны управления дверями по краям */
+.door-control-zone {
+    position: absolute;
+    top: 0;
+    width: 15%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.left-zone {
+    left: 0;
+    background: linear-gradient(to right, rgba(0, 100, 0, 0.1) 0%, transparent 100%);
+}
+
+.right-zone {
+    right: 0;
+    background: linear-gradient(to left, rgba(0, 100, 0, 0.1) 0%, transparent 100%);
+}
+
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+.door-button, .light-button {
+    padding: 12px 18px;
+    border: 2px solid #0f0;
+    background: rgba(0, 50, 0, 0.7);
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 85px;
+    text-shadow: 0 0 5px #0f0;
+    backdrop-filter: blur(5px);
+}
+
+.door-button:hover, .light-button:hover {
+    background: rgba(0, 100, 0, 0.8);
+    box-shadow: 0 0 12px #0f0;
+    transform: scale(1.05);
+}
+
+.door-button.active {
+    background: rgba(150, 0, 0, 0.8);
+    border-color: #f00;
+    color: #f00;
+    text-shadow: 0 0 5px #f00;
+    box-shadow: 0 0 12px #f00;
+}
+
+.light-button.active {
+    background: rgba(200, 200, 0, 0.8);
+    border-color: #ff0;
+    color: #000;
+    text-shadow: 0 0 3px #ff0;
+    box-shadow: 0 0 12px #ff0;
+}
+
+/* классы для переключения режимов */
+.fnaf1-only {
+    display: block !important;
+}
+
+.fnaf2-only {
+    display: none !important;
+}
+
+/* система камер */
+.camera-system {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    transition: top 0.5s ease-in-out;
+    z-index: 20;
+    display: flex;
+}
+
+.camera-system.active {
+    top: 0;
+}
+
+/* просмотр камеры */
+.camera-view-container {
+    flex: 1;
+    position: relative;
+    background: #0a0a0a;
+    overflow: hidden;
+}
+
+.camera-feed {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+}
+
+/* статические помехи как в fnaf */
+.camera-static {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 2px,
+        rgba(255, 255, 255, 0.03) 4px
+    );
+    animation: static 0.1s infinite;
+    pointer-events: none;
+    z-index: 10;
+}
+
+@keyframes static {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-4px); }
+}
+
+.camera-info {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-family: 'Courier New', monospace;
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0;
+    z-index: 11;
+}
+
+.cam-name {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.cam-rec {
+    font-size: 14px;
+    color: #f00;
+    text-shadow: 0 0 5px #f00;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0.3; }
+}
+
+/* кондрат на камере */
+.kondrat-on-cam {
+    display: none;
+    position: relative;
+    max-width: 60%;
+    max-height: 70%;
+}
+
+.kondrat-on-cam img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: brightness(0.6) contrast(1.3) sepia(0.2);
+}
+
+/* карта камер с декором */
+.camera-map {
+    width: 450px;
+    background: #000;
+    border-left: 3px solid #0f0;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -5px 0 15px rgba(0, 255, 0, 0.2);
+}
+
+.map-svg {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 3px rgba(0, 255, 0, 0.3));
+}
+
+.cam-button {
+    cursor: pointer;
+    transition: fill 0.3s;
+}
+
+.cam-button:hover {
+    fill: rgba(0, 255, 0, 0.3);
+    filter: drop-shadow(0 0 5px #0f0);
+}
+
+/* кнопка закрытия камер */
+.camera-close {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 40px;
+    background: rgba(0, 200, 0, 0.3);
+    border: 2px solid #0f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 15;
+}
+
+.camera-close:hover {
+    background: rgba(0, 255, 0, 0.5);
+    box-shadow: 0 0 10px #0f0;
+}
+
+/* экраны результата */
+.result-container {
+    text-align: center;
+    padding: 40px;
+    max-width: 600px;
+}
+
+.result-container.win img {
+    max-width: 400px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.result-container h2 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px currentColor;
+}
+
+.result-container.win h2 {
+    color: #0f0;
+}
+
+.result-container.lose h2 {
+    color: #f00;
+}
+
+.result-container p {
+    font-size: 20px;
+    margin-bottom: 30px;
+    opacity: 0.8;
+}
+
+.result-container button {
+    padding: 15px 40px;
+    font-size: 18px;
+    border: 2px solid #0f0;
+    background: rgba(0, 100, 0, 0.3);
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 0 5px #0f0;
+}
+
+.result-container button:hover {
+    background: rgba(0, 150, 0, 0.5);
+    box-shadow: 0 0 15px #0f0;
+    transform: scale(1.05);
+}
+
+/* джампскер в стиле fnaf */
+.jumpscare {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.jumpscare.active {
+    display: flex;
+    animation: glitch 0.1s infinite;
+}
+
+.jumpscare img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    animation: jumpscareZoom 0.3s ease-out;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-5px, 5px); }
+    40% { transform: translate(5px, -5px); }
+    60% { transform: translate(-5px, -5px); }
+    80% { transform: translate(5px, 5px); }
+    100% { transform: translate(0, 0); }
+}
+
+@keyframes jumpscareZoom {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* адаптив для мобильных */
+@media (max-width: 768px) {
+    .auth-container {
+        padding: 30px 20px;
+        min-width: 280px;
+    }
+    
+    .auth-container h1 {
+        font-size: 18px;
+    }
+    
+    .menu-container h1 {
+        font-size: 24px;
+    }
+    
+    .night-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-width: 90px;
+    }
+    
+    .hud {
+        font-size: 11px;
+        padding: 0 10px;
+    }
+    
+    .hud-center {
+        font-size: 18px;
+    }
+    
+    .power-left {
+        font-size: 13px;
+    }
+    
+    .door-control-zone {
+        width: 18%;
+    }
+    
+    .control-buttons {
+        gap: 10px;
+    }
+    
+    .door-button, .light-button {
+        padding: 10px 14px;
+        font-size: 11px;
+        min-width: 70px;
+    }
+    
+    .desk {
+        height: 30px;
+    }
+    
+    .monitor {
+        width: 40px;
+        height: 28px;
+        bottom: 80px;
+    }
+    
+    .camera-toggle {
+        width: 50px;
+        height: 35px;
+    }
+    
+    .camera-icon {
+        font-size: 16px;
+    }
+    
+    .camera-map {
+        width: 280px;
+        padding: 15px;
+    }
+    
+    .door-frame {
+        width: 85%;
+        height: 65%;
+    }
+    
+    .cam-name {
+        font-size: 12px;
+    }
+    
+    .cam-rec {
+        font-size: 10px;
+    }
+    
+    .result-container {
+        max-width: 90%;
+        padding: 25px;
+    }
+    
+    .result-container h2 {
+        font-size: 32px;
+    }
+    
+    .result-container p {
+        font-size: 16px;
+    }
+    
+    .result-container button {
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+    
+    .shop-container {
+        padding: 25px;
+        max-width: 90%;
+    }
+    
+    .shop-container h2 {
+        font-size: 28px;
+    }
+    
+    .shop-item {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .item-image {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .item-info h3 {
+        font-size: 18px;
+        text-align: center;
+    }
+    
+    .item-description {
+        font-size: 13px;
+        text-align: center;
+    }
+    
+    .buy-btn {
+        align-self: center;
+        width: 100%;
+    }
+    
+    .camera-minimap {
+        width: 180px;
+        height: 145px;
+    }
+    
+    .coins-display {
+        font-size: 18px;
+    }
+    
+    .menu-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .shop-btn, .logout-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .hud {
+        font-size: 9px;
+    }
+    
+    .hud-center {
+        font-size: 16px;
+    }
+    
+    .camera-map {
+        width: 200px;
+        padding: 10px;
+    }
+    
+    .camera-info {
+        top: 10px;
+        left: 10px;
+    }
+    
+    .door-control-zone {
+        width: 22%;
+    }
+    
+    .door-button, .light-button {
+        padding: 8px 10px;
+        font-size: 10px;
+        min-width: 60px;
+    }
+    
+    .desk {
+        height: 25px;
+    }
+    
+    .monitor {
+        width: 35px;
+        height: 25px;
+        bottom: 70px;
+    }
+    
+    .shop-container {
+        padding: 20px;
+    }
+    
+    .shop-container h2 {
+        font-size: 24px;
+    }
+    
+    .item-image {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .item-info h3 {
+        font-size: 16px;
+    }
+    
+    .item-description {
+        font-size: 12px;
+    }
+    
+    .camera-minimap {
+        width: 160px;
+        height: 130px;
+    }
+    
+    .coins-display {
+        font-size: 16px;
+    }
+}
+
+/* магазин */
+.shop-container {
+    background: rgba(10, 10, 10, 0.95);
+    border: 3px solid #0f0;
+    border-radius: 15px;
+    padding: 40px;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+}
+
+.shop-container h2 {
+    color: #0f0;
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #0f0;
+}
+
+.shop-items {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.shop-item {
+    background: rgba(20, 20, 20, 0.8);
+    border: 2px solid #0f0;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    transition: all 0.3s;
+}
+
+.shop-item:hover {
+    border-color: #3f3;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    transform: translateY(-3px);
+}
+
+.item-image {
+    flex-shrink: 0;
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #0f0;
+    background: #000;
+}
+
+.item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-info h3 {
+    color: #0f0;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.item-description {
+    color: #ccc;
+    font-size: 14px;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.item-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.stat {
+    background: rgba(0, 100, 0, 0.3);
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid #0f0;
+    font-size: 13px;
+    color: #0f0;
+}
+
+.owned-indicator {
+    background: rgba(0, 200, 0, 0.5);
+    color: #fff;
+    font-weight: bold;
+}
+
+.buy-btn {
+    padding: 12px 25px;
+    border: 2px solid #0f0;
+    border-radius: 8px;
+    background: rgba(0, 150, 0, 0.4);
+    color: #0f0;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    align-self: flex-start;
+    font-family: 'Courier New', monospace;
+}
+
+.buy-btn:hover {
+    background: rgba(0, 200, 0, 0.6);
+    box-shadow: 0 0 15px #0f0;
+    transform: scale(1.05);
+}
+
+.buy-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #666;
+    color: #666;
+    background: rgba(50, 50, 50, 0.4);
+}
+
+.buy-btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.close-shop-btn {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #f00;
+    border-radius: 8px;
+    background: rgba(150, 0, 0, 0.4);
+    color: #f00;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+    font-family: 'Courier New', monospace;
+}
+
+.close-shop-btn:hover {
+    background: rgba(200, 0, 0, 0.6);
+    box-shadow: 0 0 15px #f00;
+}
+
+/* мини-карта на камерах */
+.camera-minimap {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 220px;
+    height: 180px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #0f0;
+    border-radius: 5px;
+    padding: 5px;
+    z-index: 12;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.minimap-svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* улучшенный офис */
+.office-back-wall {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 40%;
+    background: linear-gradient(to bottom, #1a1a1a 0%, #0a0a0a 100%);
+    border: 2px solid #222;
+}
+
+.wall-decoration {
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 2px;
+    background: #333;
+}
+
+.poster {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 50px;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 2px solid #333;
+}
+
+.desk-area {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.desk {
+    width: 85%;
+    height: 50px;
+    background: linear-gradient(to bottom, #3a3a3a 0%, #2a2a2a 100%);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.9);
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.desk-drawer {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 20px;
+    background: #1a1a1a;
+    border: 1px solid #444;
+}
+
+.desk-drawer.left {
+    left: 15%;
+}
+
+.desk-drawer.right {
+    right: 15%;
+}
+
+.desk-drawer::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 2px;
+    background: #555;
+}
+
+.monitor {
+    width: 60px;
+    height: 45px;
+    background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
+    border: 3px solid #333;
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 3px;
+}
+
+.monitor-screen {
+    width: 90%;
+    height: 80%;
+    background: rgba(0, 255, 0, 0.1);
+    margin: 5% auto;
+    box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.papers {
+    width: 50px;
+    height: 20px;
+    background: linear-gradient(135deg, rgba(200, 200, 200, 0.2), rgba(150, 150, 150, 0.1));
+    position: absolute;
+    border: 1px solid #444;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.papers.stack-1 {
+    bottom: 65px;
+    left: 25%;
+    transform: rotate(-8deg);
+}
+
+.papers.stack-2 {
+    bottom: 68px;
+    right: 28%;
+    transform: rotate(5deg);
+}
+
+.coffee-cup {
+    position: absolute;
+    bottom: 58px;
+    left: 15%;
+    width: 20px;
+    height: 25px;
+    background: linear-gradient(to bottom, #3a2a1a 0%, #2a1a0a 100%);
+    border-radius: 0 0 8px 8px;
+    border: 2px solid #444;
+}
+
+.coffee-cup::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 5px;
+    background: #2a1a0a;
+    border-radius: 50%;
+}
+
+.tablet {
+    position: absolute;
+    bottom: 60px;
+    right: 15%;
+    width: 35px;
+    height: 25px;
+    background: linear-gradient(to bottom, #1a1a1a 0%, #0a0a0a 100%);
+    border: 2px solid #333;
+    border-radius: 2px;
+}
+
+.tablet::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 15px;
+    background: rgba(0, 100, 0, 0.2);
+    border: 1px solid #0f0;
+}
+
+/* убираем выделение */
+button, input {
+    -webkit-tap-highlight-color: transparent;
+}
+
+* {
+    -webkit-touch-callout: none;
+}
+
+/* ==== FNAF 2 СТИЛИ ==== */
+
+/* вентиляция сверху */
+.vent-opening {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 150px;
+    background: linear-gradient(to bottom, #0a0a0a, transparent);
+    border-bottom: 2px solid #222;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.vent-light {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(255, 255, 100, 0.4) 0%, transparent 70%);
+    display: none;
+}
+
+.kondrat-vent {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 60%;
+    display: none;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: brightness(0.5) contrast(1.3);
+}
+
+/* дверные проемы без дверей */
+.doorway-frame {
+    position: absolute;
+    top: 10%;
+    width: 85%;
+    height: 75%;
+    border: 2px solid #111;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* фонарик */
+.flashlight-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.flashlight-glow.left, .flashlight-glow.right {
+    background: radial-gradient(circle at center, rgba(255, 255, 200, 0.6) 0%, transparent 60%);
+}
+
+/* визуал закрытых дверей (FNAF 1) */
+.door-visual {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateY(-100%);
+    transition: transform 0.6s ease-out;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.door-visual.closed {
+    transform: translateY(0);
+}
+
+.door-visual.left {
+    background: 
+        repeating-linear-gradient(0deg, 
+            rgba(70, 70, 80, 1) 0px, 
+            rgba(60, 60, 70, 1) 3px, 
+            rgba(50, 50, 60, 1) 6px),
+        linear-gradient(to right, 
+            rgba(65, 65, 75, 1) 0%,
+            rgba(55, 55, 65, 1) 25%,
+            rgba(45, 45, 55, 0.98) 60%,
+            rgba(30, 30, 40, 0.8) 85%,
+            transparent 100%);
+    left: 0;
+    border-right: 4px solid rgba(30, 30, 40, 0.95);
+    box-shadow: 
+        inset -20px 0 40px rgba(0, 0, 0, 0.9),
+        inset 0 15px 30px rgba(90, 90, 100, 0.2),
+        inset 0 -15px 30px rgba(0, 0, 0, 0.7),
+        8px 0 30px rgba(0, 0, 0, 0.95);
+}
+
+.door-visual.right {
+    background: 
+        repeating-linear-gradient(0deg, 
+            rgba(70, 70, 80, 1) 0px, 
+            rgba(60, 60, 70, 1) 3px, 
+            rgba(50, 50, 60, 1) 6px),
+        linear-gradient(to left, 
+            rgba(65, 65, 75, 1) 0%,
+            rgba(55, 55, 65, 1) 25%,
+            rgba(45, 45, 55, 0.98) 60%,
+            rgba(30, 30, 40, 0.8) 85%,
+            transparent 100%);
+    left: 50%;
+    border-left: 4px solid rgba(30, 30, 40, 0.95);
+    box-shadow: 
+        inset 20px 0 40px rgba(0, 0, 0, 0.9),
+        inset 0 15px 30px rgba(90, 90, 100, 0.2),
+        inset 0 -15px 30px rgba(0, 0, 0, 0.7),
+        -8px 0 30px rgba(0, 0, 0, 0.95);
+}
+
+/* свет в дверях (FNAF 1) */
+.door-light {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.door-light.left {
+    background: radial-gradient(ellipse 70% 90% at 50% 50%, 
+        rgba(255, 250, 220, 0.85) 0%,
+        rgba(255, 240, 180, 0.7) 25%,
+        rgba(255, 220, 120, 0.5) 50%,
+        rgba(255, 200, 80, 0.3) 75%,
+        transparent 100%);
+    box-shadow: 0 0 60px 25px rgba(255, 240, 150, 0.6);
+}
+
+.door-light.right {
+    background: radial-gradient(ellipse 70% 90% at 50% 50%, 
+        rgba(255, 250, 220, 0.85) 0%,
+        rgba(255, 240, 180, 0.7) 25%,
+        rgba(255, 220, 120, 0.5) 50%,
+        rgba(255, 200, 80, 0.3) 75%,
+        transparent 100%);
+    box-shadow: 0 0 60px 25px rgba(255, 240, 150, 0.6);
+}
+
+/* Кондрат в дверях (как в FNAF 1) */
+.kondrat-door {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 4;
+    pointer-events: none;
+    background: radial-gradient(ellipse 40% 60% at 50% 40%,
+        rgba(139, 69, 19, 0.9) 0%,
+        rgba(101, 67, 33, 0.8) 30%,
+        rgba(80, 50, 20, 0.6) 60%,
+        transparent 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kondrat-door::before {
+    content: '👁️';
+    font-size: 80px;
+    filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.8));
+    animation: blink 3s infinite;
+}
+
+@keyframes blink {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0; }
+}
+
+/* кнопки фонарика */
+.flashlight-zone {
+    position: absolute;
+    top: 0;
+    width: 15%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.flashlight-button {
+    padding: 10px 16px;
+    border: 2px solid #ff0;
+    background: rgba(100, 100, 0, 0.6);
+    color: #ff0;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-shadow: 0 0 5px #ff0;
+    backdrop-filter: blur(5px);
+    border-radius: 5px;
+}
+
+.flashlight-button:hover {
+    background: rgba(150, 150, 0, 0.8);
+    box-shadow: 0 0 12px #ff0;
+    transform: scale(1.05);
+}
+
+.flashlight-button.active {
+    background: rgba(200, 200, 0, 0.9);
+    box-shadow: 0 0 20px #ff0;
+}
+
+.vent-flashlight-zone {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+}
+
+/* кнопка маски */
+.mask-button-container {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+}
+
+.mask-button {
+    padding: 15px 35px;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.8), rgba(101, 67, 33, 0.8));
+    border: 3px solid #8b4513;
+    border-radius: 12px;
+    color: #ffd700;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 0 8px #000;
+    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.mask-button:hover {
+    background: linear-gradient(135deg, rgba(160, 82, 45, 0.9), rgba(139, 69, 19, 0.9));
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    transform: scale(1.08);
+}
+
+.mask-button.active {
+    background: linear-gradient(135deg, rgba(50, 150, 50, 0.8), rgba(34, 139, 34, 0.8));
+    border-color: #0f0;
+    color: #0f0;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+}
+
+.mask-icon {
+    font-size: 28px;
+}
+
+.mask-text {
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+/* вид в маске */
+.mask-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.mask-overlay {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(101, 67, 33, 0.5) 50%, rgba(50, 33, 16, 0.8) 70%, #000 90%);
+}
+
+.mask-eyes {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 50%;
+    background: 
+        radial-gradient(circle at 30% 40%, transparent 15%, rgba(0, 0, 0, 0.6) 15%, rgba(0, 0, 0, 0.6) 25%, transparent 25%),
+        radial-gradient(circle at 70% 40%, transparent 15%, rgba(0, 0, 0, 0.6) 15%, rgba(0, 0, 0, 0.6) 25%, transparent 25%);
+}
+
+/* индикатор музыкальной шкатулки */
+.music-box-indicator {
+    margin-top: 10px;
+    width: 150px;
+}
+
+.music-box-label {
+    font-size: 11px;
+    margin-bottom: 3px;
+    color: #0f0;
+}
+
+.music-box-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #0f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.music-box-level {
+    height: 100%;
+    width: 100%;
+    background: #0f0;
+    transition: width 0.3s, background 0.3s;
+    box-shadow: 0 0 10px #0f0;
+}
+
+/* кнопки на камерах */
+.camera-controls {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 15;
+}
+
+.lure-button {
+    padding: 10px 20px;
+    background: rgba(255, 215, 0, 0.3);
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    color: #ffd700;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 0 5px #ffd700;
+    white-space: nowrap;
+}
+
+.lure-button:hover {
+    background: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 15px #ffd700;
+    transform: scale(1.05);
+}
+
+.wind-music-box-button {
+    padding: 10px 20px;
+    background: rgba(138, 43, 226, 0.3);
+    border: 2px solid #8a2be2;
+    border-radius: 8px;
+    color: #da70d6;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 0 5px #8a2be2;
+    white-space: nowrap;
+}
+
+.wind-music-box-button:hover {
+    background: rgba(138, 43, 226, 0.5);
+    box-shadow: 0 0 15px #8a2be2;
+    transform: scale(1.05);
+}
+
+.wind-music-box-button:active {
+    background: rgba(138, 43, 226, 0.7);
+    transform: scale(0.98);
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* карточки выбора режима */
+.mode-buttons {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.mode-card {
+    background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+    border: 2px solid #444;
+    border-radius: 10px;
+    padding: 30px;
+    width: 250px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mode-card:hover {
+    border-color: #ffd700;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+}
+
+.mode-card h2 {
+    color: #ffd700;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.mode-card p {
+    color: #aaa;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.mode-card ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+.mode-card ul li {
+    color: #ccc;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+/* контроли для FNAF 1 */
+.fnaf1-controls {
+    pointer-events: none;
+}
+
+.door-controls {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex !important;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 50;
+    pointer-events: auto;
+}
+
+.door-controls.left {
+    left: 20px;
+}
+
+.door-controls.right {
+    right: 20px;
+}
+
+.door-button, .light-button {
+    padding: 15px 25px;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 100px;
+}
+
+.door-button {
+    background: rgba(50, 50, 50, 0.8);
+    border-color: #666;
+    color: #fff;
+}
+
+.door-button:hover {
+    background: rgba(70, 70, 70, 0.9);
+    border-color: #888;
+}
+
+.door-button.active {
+    background: rgba(200, 50, 50, 0.8);
+    border-color: #f00;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+}
+
+.light-button {
+    background: rgba(50, 50, 50, 0.8);
+    border-color: #666;
+    color: #fff;
+}
+
+.light-button:hover {
+    background: rgba(70, 70, 70, 0.9);
+    border-color: #888;
+}
+
+.light-button.active {
+    background: rgba(255, 200, 50, 0.8);
+    border-color: #ffa500;
+    color: #000;
+    box-shadow: 0 0 20px rgba(255, 165, 0, 0.7);
+}
+    </style>
+</head>
+<body>
+    <!-- экран авторизации -->
+    <div id="authScreen" class="screen active">
+        <div class="auth-container">
+            <h1>FIVE NIGHTS AT KONDRAT'S</h1>
+            <div id="loginForm">
+                <h2>Вход</h2>
+                <input type="text" id="loginUsername" placeholder="Имя пользователя">
+                <input type="password" id="loginPassword" placeholder="Пароль" onkeypress="if(event.key === 'Enter') game.login()">
+                <button onclick="game.login()">Войти</button>
+                <p>Нет аккаунта? <span class="link" onclick="game.showRegister()">Зарегистрироваться</span></p>
+            </div>
+            <div id="registerForm" style="display: none;">
+                <h2>Регистрация</h2>
+                <input type="text" id="registerUsername" placeholder="Имя пользователя">
+                <input type="password" id="registerPassword" placeholder="Пароль">
+                <input type="password" id="registerPasswordConfirm" placeholder="Повтори пароль" onkeypress="if(event.key === 'Enter') game.register()">
+                <button onclick="game.register()">Создать аккаунт</button>
+                <p>Уже есть аккаунт? <span class="link" onclick="game.showLogin()">Войти</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- выбор режима -->
+    <div id="modeSelectScreen" class="screen">
+        <div class="menu-container">
+            <h1>FIVE NIGHTS AT KONDRAT'S</h1>
+            <p style="font-size: 20px; margin-bottom: 30px;">Выбери режим игры:</p>
+            
+            <div class="mode-buttons">
+                <div class="mode-card" onclick="game.selectMode('fnaf1')">
+                    <h2>🚪 FNAF 1</h2>
+                    <p>Классический режим</p>
+                    <ul>
+                        <li>✓ Двери и свет</li>
+                        <li>✓ 11 камер</li>
+                        <li>✓ Привлечение звуком</li>
+                    </ul>
+                </div>
+                
+                <div class="mode-card" onclick="game.selectMode('fnaf2')">
+                    <h2>🎭 FNAF 2</h2>
+                    <p>Расширенный режим</p>
+                    <ul>
+                        <li>✓ Маска Фредди</li>
+                        <li>✓ Вентиляция</li>
+                        <li>✓ Музыкальная шкатулка</li>
+                        <li>✓ Фонарик</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- главное меню -->
+    <div id="menuScreen" class="screen">
+        <div class="menu-container">
+            <h1 id="menuTitle">FIVE NIGHTS AT KONDRAT'S</h1>
+            <p id="welcomeText">Добро пожаловать!</p>
+            
+            <!-- баланс монет -->
+            <div class="coins-display">
+                <span class="coin-icon">🪙</span>
+                <span id="coinBalance">0</span> монет
+            </div>
+            
+            <div id="nightButtons" class="night-buttons"></div>
+            <p class="menu-hint">12 AM - 6 AM<br>Выживи 6 часов</p>
+            
+            <div class="menu-actions">
+                <button onclick="game.openShop()" class="shop-btn">🛒 Магазин</button>
+                <button onclick="game.showModeSelect()" class="mode-btn">🎮 Сменить режим</button>
+                <button onclick="game.logout()" class="logout-btn">Выход</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- магазин -->
+    <div id="shopScreen" class="screen overlay">
+        <div class="shop-container">
+            <h2>МАГАЗИН</h2>
+            <div class="coins-display">
+                <span class="coin-icon">🪙</span>
+                <span id="shopCoinBalance">0</span> монет
+            </div>
+            
+            <div class="shop-items">
+                <div class="shop-item" id="goodmanHelp">
+                    <div class="item-image">
+                        <img src="kondrat_goodman.svg" alt="Кондрат Гудман">
+                    </div>
+                    <div class="item-info">
+                        <h3>Помощь от Кондрата Гудмана</h3>
+                        <p class="item-description">Кондрат Гудман поможет тебе! Начинай игру со 110% энергии.</p>
+                        <div class="item-stats">
+                            <div class="stat">⚡ +10% к энергии</div>
+                            <div class="stat owned-indicator" id="goodmanOwned" style="display: none;">✓ Куплено</div>
+                        </div>
+                        <button class="buy-btn" id="buyGoodmanBtn" onclick="game.buyItem('goodmanHelp')">
+                            Купить за <span class="coin-icon">🪙</span>50
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="game.closeShop()" class="close-shop-btn">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- игровой экран -->
+    <div id="gameScreen" class="screen">
+        <!-- вид офиса FNAF 2 (нет дверей!) -->
+        <div id="officeView" class="office-view">
+            <!-- вентиляция сверху -->
+            <div class="vent-opening">
+                <div id="ventFlashlight" class="vent-light"></div>
+                <div id="kondratVent" class="kondrat-vent"></div>
+            </div>
+            
+            <!-- панорама офиса -->
+            <div class="office-panorama" id="officePanorama">
+                <!-- левая зона (без двери) -->
+                <div class="office-section left-section">
+                    <div class="doorway-frame left-frame">
+                        <div id="leftDoor" class="door-visual left"></div>
+                        <div id="leftLight" class="door-light left"></div>
+                        <div id="leftFlashlight" class="flashlight-glow left"></div>
+                        <div id="kondratLeftDoor" class="kondrat-door left"></div>
+                    </div>
+                </div>
+                
+                <!-- центральная зона -->
+                <div class="office-section center-section">
+                    <!-- офисные предметы для атмосферы -->
+                    <div class="office-props">
+                        <div class="fan"></div>
+                        <div class="desk-items">
+                            <div class="phone"></div>
+                            <div class="coffee"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="desk-area">
+                        <div class="desk">
+                            <div class="desk-drawer left"></div>
+                            <div class="desk-drawer right"></div>
+                        </div>
+                        <div class="monitor">
+                            <div class="monitor-screen"></div>
+                        </div>
+                        <div class="papers stack-1"></div>
+                        <div class="papers stack-2"></div>
+                        <div class="tablet"></div>
+                    </div>
+                </div>
+                
+                <!-- правая зона (без двери) -->
+                <div class="office-section right-section">
+                    <div class="doorway-frame right-frame">
+                        <div id="rightDoor" class="door-visual right"></div>
+                        <div id="rightLight" class="door-light right"></div>
+                        <div id="rightFlashlight" class="flashlight-glow right"></div>
+                        <div id="kondratRightDoor" class="kondrat-door right"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- вид в маске Фредди -->
+        <div id="maskView" class="mask-view" style="display: none;">
+            <div class="mask-overlay"></div>
+            <div class="mask-eyes"></div>
+        </div>
+
+        <!-- UI слой FNAF 2 -->
+        <div id="gameUI">
+            <!-- статические помехи когда кондрат близко -->
+            <div id="staticWarning" class="static-warning" style="display: none;"></div>
+            
+            <!-- информация -->
+            <div class="hud">
+                <div class="hud-left">
+                    <div class="power-left">Power: <span id="powerPercent">100</span>%</div>
+                    <div class="power-usage">Usage: <span id="powerUsage">1</span></div>
+                    <!-- индикатор музыкальной шкатулки (только FNAF 2) -->
+                    <div class="music-box-indicator fnaf2-only">
+                        <div class="music-box-label">🎵 Music Box</div>
+                        <div class="music-box-bar">
+                            <div id="musicBoxLevel" class="music-box-level"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hud-center">
+                    <div class="time-display" id="gameTime">12 AM</div>
+                </div>
+                <div class="hud-right">
+                    <div class="night-display">Night <span id="currentNight">1</span></div>
+                </div>
+            </div>
+
+            <!-- кнопки фонарика по краям - только для FNAF 2 -->
+            <div class="flashlight-zone left-zone fnaf2-only">
+                <div class="control-buttons">
+                    <button class="flashlight-button" id="leftFlashBtn" 
+                            onmousedown="game.toggleFlashlight('left')" 
+                            ontouchstart="game.toggleFlashlight('left')"
+                            onmouseup="game.toggleFlashlight('left')"
+                            ontouchend="game.toggleFlashlight('left')">
+                        🔦 HALL
+                    </button>
+                </div>
+            </div>
+
+            <div class="flashlight-zone right-zone fnaf2-only">
+                <div class="control-buttons">
+                    <button class="flashlight-button" id="rightFlashBtn" 
+                            onmousedown="game.toggleFlashlight('right')"
+                            ontouchstart="game.toggleFlashlight('right')"
+                            onmouseup="game.toggleFlashlight('right')"
+                            ontouchend="game.toggleFlashlight('right')">
+                        🔦 HALL
+                    </button>
+                </div>
+            </div>
+            
+            <!-- кнопка фонарика для вентиляции (сверху) - только для FNAF 2 -->
+            <div class="vent-flashlight-zone fnaf2-only">
+                <button class="flashlight-button" id="ventFlashBtn" 
+                        onmousedown="game.toggleFlashlight('vent')"
+                        ontouchstart="game.toggleFlashlight('vent')"
+                        onmouseup="game.toggleFlashlight('vent')"
+                        ontouchend="game.toggleFlashlight('vent')">
+                    🔦 VENT
+                </button>
+            </div>
+
+            <!-- FNAF 1 контроли (двери и свет) -->
+            <div class="fnaf1-only">
+                <!-- левая дверь и свет -->
+                <div class="door-controls left">
+                    <button class="door-button" id="leftDoorBtn" onclick="game.toggleDoor('left')">
+                        ДВЕРЬ
+                    </button>
+                    <button class="light-button" id="leftLightBtn" 
+                            onmousedown="game.toggleLight('left', true)"
+                            onmouseup="game.toggleLight('left', false)"
+                            onmouseleave="game.toggleLight('left', false)"
+                            ontouchstart="game.toggleLight('left', true)"
+                            ontouchend="game.toggleLight('left', false)">
+                        СВЕТ
+                    </button>
+                </div>
+                
+                <!-- правая дверь и свет -->
+                <div class="door-controls right">
+                    <button class="light-button" id="rightLightBtn"
+                            onmousedown="game.toggleLight('right', true)"
+                            onmouseup="game.toggleLight('right', false)"
+                            onmouseleave="game.toggleLight('right', false)"
+                            ontouchstart="game.toggleLight('right', true)"
+                            ontouchend="game.toggleLight('right', false)">
+                        СВЕТ
+                    </button>
+                    <button class="door-button" id="rightDoorBtn" onclick="game.toggleDoor('right')">
+                        ДВЕРЬ
+                    </button>
+                </div>
+            </div>
+
+            <!-- кнопка маски (по центру снизу) - только для FNAF 2 -->
+            <div class="mask-button-container fnaf2-only">
+                <button class="mask-button" id="maskBtn" onclick="game.toggleMask()">
+                    <div class="mask-icon">🎭</div>
+                    <div class="mask-text">НАДЕТЬ МАСКУ</div>
+                </button>
+            </div>
+
+            <!-- кнопка камер -->
+            <div class="camera-toggle" onclick="game.toggleCamera()">
+                <div class="camera-icon">▲</div>
+            </div>
+        </div>
+
+        <!-- панель камер -->
+        <div id="cameraPanel" class="camera-system">
+            <div class="camera-view-container">
+                <div class="camera-static"></div>
+                <div class="camera-feed" id="cameraFeed">
+                    <!-- мини-карта на камере -->
+                    <div class="camera-minimap" id="cameraMinimap">
+                        <svg viewBox="0 0 200 160" class="minimap-svg">
+                            <!-- расширенная карта с 11 камерами -->
+                            <rect id="miniCam0" x="75" y="10" width="50" height="30" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam1" x="25" y="55" width="40" height="35" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam2" x="135" y="55" width="40" height="35" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam3" x="15" y="100" width="35" height="28" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam4" x="150" y="100" width="35" height="28" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam5" x="80" y="75" width="40" height="30" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam6" x="5" y="130" width="30" height="20" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam7" x="165" y="130" width="30" height="20" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam8" x="80" y="35" width="40" height="20" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam9" x="50" y="40" width="25" height="15" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect id="miniCam10" x="125" y="40" width="25" height="15" fill="#0a0a0a" stroke="#0f0" stroke-width="1.5"/>
+                            <rect x="85" y="135" width="30" height="20" fill="#2a2a2a" stroke="#ff0" stroke-width="1.5"/>
+                            
+                            <!-- индикатор Кондрата на мини-карте -->
+                            <circle id="kondratDot" cx="100" cy="25" r="4" fill="#f00" style="display: none;">
+                                <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+                            </circle>
+                        </svg>
+                    </div>
+                    
+                    <div id="kondratOnCamera" class="kondrat-on-cam"></div>
+                </div>
+                <div class="camera-info">
+                    <div class="cam-name" id="currentCamName">CAM 1A - Show Stage</div>
+                    <div class="cam-rec">REC</div>
+                </div>
+                
+                <!-- кнопки управления -->
+                <div class="camera-controls">
+                    <button class="lure-button" onclick="game.lureKondrat(game.currentCamera)">
+                        🔊 ПРИВЛЕЧЬ ЗВУКОМ
+                    </button>
+                    <button class="wind-music-box-button" onmousedown="game.windMusicBox()" ontouchstart="game.windMusicBox()">
+                        🎵 ЗАВЕСТИ ШКАТУЛКУ
+                    </button>
+                </div>
+            </div>
+
+            <!-- карта с камерами и декором -->
+            <div class="camera-map">
+                <svg viewBox="0 0 500 400" class="map-svg">
+                    <!-- декор: стены -->
+                    <rect x="0" y="0" width="500" height="400" fill="#050505"/>
+                    
+                    <!-- коридоры -->
+                    <line x1="200" y1="80" x2="200" y2="160" stroke="#0a0a0a" stroke-width="40"/>
+                    <line x1="300" y1="80" x2="300" y2="160" stroke="#0a0a0a" stroke-width="40"/>
+                    <line x1="100" y1="200" x2="200" y2="200" stroke="#0a0a0a" stroke-width="35"/>
+                    <line x1="300" y1="200" x2="400" y2="200" stroke="#0a0a0a" stroke-width="35"/>
+                    <line x1="75" y1="260" x2="200" y2="320" stroke="#0a0a0a" stroke-width="30"/>
+                    <line x1="425" y1="260" x2="300" y2="320" stroke="#0a0a0a" stroke-width="30"/>
+                    
+                    <!-- CAM 1A - Show Stage (сцена) -->
+                    <rect x="180" y="30" width="140" height="80" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <!-- декор сцены -->
+                    <rect x="200" y="70" width="20" height="30" fill="#0f0" opacity="0.3"/>
+                    <rect x="250" y="65" width="20" height="35" fill="#0f0" opacity="0.3"/>
+                    <rect x="260" y="70" width="20" height="30" fill="#0f0" opacity="0.3"/>
+                    <circle cx="220" cy="60" r="8" fill="#0f0" opacity="0.4"/>
+                    <circle cx="280" cy="60" r="8" fill="#0f0" opacity="0.4"/>
+                    <text x="250" y="60" fill="#00ff00" text-anchor="middle" font-size="14" font-family="Courier New">CAM 1A</text>
+                    <text x="250" y="100" fill="#00ff00" text-anchor="middle" font-size="10" font-family="Courier New">Show Stage</text>
+                    
+                    <!-- CAM 1B - Dining Area (столовая) -->
+                    <rect x="60" y="140" width="110" height="90" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <!-- столы -->
+                    <rect x="75" y="160" width="25" height="20" fill="#0f0" opacity="0.3"/>
+                    <rect x="110" y="165" width="25" height="20" fill="#0f0" opacity="0.3"/>
+                    <rect x="140" y="160" width="20" height="20" fill="#0f0" opacity="0.3"/>
+                    <rect x="80" y="195" width="30" height="25" fill="#0f0" opacity="0.3"/>
+                    <rect x="125" y="195" width="30" height="25" fill="#0f0" opacity="0.3"/>
+                    <text x="115" y="175" fill="#00ff00" text-anchor="middle" font-size="14" font-family="Courier New">CAM 1B</text>
+                    <text x="115" y="215" fill="#00ff00" text-anchor="middle" font-size="9" font-family="Courier New">Dining Area</text>
+                    
+                    <!-- CAM 1C - Pirate Cove (пиратская бухта) -->
+                    <rect x="330" y="140" width="110" height="90" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <!-- занавес -->
+                    <line x1="345" y1="155" x2="345" y2="215" stroke="#0f0" opacity="0.4" stroke-width="3"/>
+                    <line x1="365" y1="155" x2="365" y2="215" stroke="#0f0" opacity="0.4" stroke-width="3"/>
+                    <line x1="385" y1="155" x2="385" y2="215" stroke="#0f0" opacity="0.4" stroke-width="3"/>
+                    <line x1="405" y1="155" x2="405" y2="215" stroke="#0f0" opacity="0.4" stroke-width="3"/>
+                    <line x1="425" y1="155" x2="425" y2="215" stroke="#0f0" opacity="0.4" stroke-width="3"/>
+                    <text x="385" y="175" fill="#00ff00" text-anchor="middle" font-size="14" font-family="Courier New">CAM 1C</text>
+                    <text x="385" y="215" fill="#00ff00" text-anchor="middle" font-size="9" font-family="Courier New">Pirate Cove</text>
+                    
+                    <!-- CAM 2A - West Hall (западный коридор) -->
+                    <rect x="35" y="250" width="100" height="70" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <line x1="50" y1="260" x2="120" y2="260" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <line x1="50" y1="280" x2="120" y2="280" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <line x1="50" y1="300" x2="120" y2="300" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <text x="85" y="285" fill="#00ff00" text-anchor="middle" font-size="13" font-family="Courier New">CAM 2A</text>
+                    <text x="85" y="310" fill="#00ff00" text-anchor="middle" font-size="9" font-family="Courier New">West Hall</text>
+                    
+                    <!-- CAM 2B - East Hall (восточный коридор) -->
+                    <rect x="365" y="250" width="100" height="70" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <line x1="380" y1="260" x2="450" y2="260" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <line x1="380" y1="280" x2="450" y2="280" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <line x1="380" y1="300" x2="450" y2="300" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <text x="415" y="285" fill="#00ff00" text-anchor="middle" font-size="13" font-family="Courier New">CAM 2B</text>
+                    <text x="415" y="310" fill="#00ff00" text-anchor="middle" font-size="9" font-family="Courier New">East Hall</text>
+                    
+                    <!-- CAM 3 - Kitchen (кухня) -->
+                    <rect x="190" y="220" width="120" height="65" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <rect x="200" y="235" width="25" height="35" fill="#0f0" opacity="0.3"/>
+                    <rect x="240" y="235" width="30" height="35" fill="#0f0" opacity="0.3"/>
+                    <rect x="275" y="235" width="25" height="35" fill="#0f0" opacity="0.3"/>
+                    <text x="250" y="250" fill="#00ff00" text-anchor="middle" font-size="14" font-family="Courier New">CAM 3</text>
+                    <text x="250" y="270" fill="#00ff00" text-anchor="middle" font-size="9" font-family="Courier New">Kitchen</text>
+                    
+                    <!-- CAM 4A - West Hall Corner (угол западного коридора) -->
+                    <rect x="20" y="335" width="80" height="55" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <line x1="30" y1="345" x2="90" y2="345" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <line x1="30" y1="365" x2="90" y2="365" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <text x="60" y="365" fill="#00ff00" text-anchor="middle" font-size="12" font-family="Courier New">CAM 4A</text>
+                    <text x="60" y="380" fill="#00ff00" text-anchor="middle" font-size="8" font-family="Courier New">W.H.Corner</text>
+                    
+                    <!-- CAM 4B - East Hall Corner (угол восточного коридора) -->
+                    <rect x="400" y="335" width="80" height="55" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <line x1="410" y1="345" x2="470" y2="345" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <line x1="410" y1="365" x2="470" y2="365" stroke="#0f0" opacity="0.2" stroke-width="2"/>
+                    <text x="440" y="365" fill="#00ff00" text-anchor="middle" font-size="12" font-family="Courier New">CAM 4B</text>
+                    <text x="440" y="380" fill="#00ff00" text-anchor="middle" font-size="8" font-family="Courier New">E.H.Corner</text>
+                    
+                    <!-- CAM 5 - Backstage (закулисье) -->
+                    <rect x="190" y="110" width="120" height="65" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <!-- ящики -->
+                    <rect x="200" y="125" width="20" height="20" fill="#0f0" opacity="0.3"/>
+                    <rect x="225" y="130" width="18" height="18" fill="#0f0" opacity="0.3"/>
+                    <rect x="245" y="125" width="22" height="22" fill="#0f0" opacity="0.3"/>
+                    <rect x="270" y="128" width="25" height="25" fill="#0f0" opacity="0.3"/>
+                    <rect x="210" y="155" width="30" height="15" fill="#0f0" opacity="0.3"/>
+                    <text x="250" y="145" fill="#00ff00" text-anchor="middle" font-size="14" font-family="Courier New">CAM 5</text>
+                    <text x="250" y="165" fill="#00ff00" text-anchor="middle" font-size="9" font-family="Courier New">Backstage</text>
+                    
+                    <!-- CAM 6 - Restrooms (туалеты) -->
+                    <rect x="120" y="80" width="60" height="50" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <circle cx="135" cy="100" r="5" fill="#0f0" opacity="0.3"/>
+                    <circle cx="165" cy="100" r="5" fill="#0f0" opacity="0.3"/>
+                    <text x="150" y="105" fill="#00ff00" text-anchor="middle" font-size="12" font-family="Courier New">CAM 6</text>
+                    <text x="150" y="120" fill="#00ff00" text-anchor="middle" font-size="8" font-family="Courier New">Restrooms</text>
+                    
+                    <!-- CAM 7 - Supply Closet (кладовка) -->
+                    <rect x="320" y="80" width="60" height="50" fill="#1a1a1a" stroke="#00ff00" stroke-width="2"/>
+                    <rect x="330" y="95" width="15" height="20" fill="#0f0" opacity="0.3"/>
+                    <rect x="350" y="95" width="15" height="20" fill="#0f0" opacity="0.3"/>
+                    <text x="350" y="105" fill="#00ff00" text-anchor="middle" font-size="12" font-family="Courier New">CAM 7</text>
+                    <text x="350" y="120" fill="#00ff00" text-anchor="middle" font-size="8" font-family="Courier New">Supply</text>
+                    
+                    <!-- OFFICE (офис) -->
+                    <rect x="190" y="330" width="120" height="60" fill="#2a2a2a" stroke="#ffff00" stroke-width="3"/>
+                    <!-- стол -->
+                    <rect x="230" y="355" width="40" height="25" fill="#ff0" opacity="0.3"/>
+                    <circle cx="210" cy="360" r="5" fill="#ff0" opacity="0.4"/>
+                    <circle cx="280" cy="360" r="5" fill="#ff0" opacity="0.4"/>
+                    <text x="250" y="365" fill="#ffff00" text-anchor="middle" font-size="16" font-family="Courier New">OFFICE</text>
+                    
+                    <!-- кнопки камер (невидимые) -->
+                    <rect class="cam-button" data-cam="0" x="180" y="30" width="140" height="80" fill="transparent" onclick="game.selectCamera(0)"/>
+                    <rect class="cam-button" data-cam="1" x="60" y="140" width="110" height="90" fill="transparent" onclick="game.selectCamera(1)"/>
+                    <rect class="cam-button" data-cam="2" x="330" y="140" width="110" height="90" fill="transparent" onclick="game.selectCamera(2)"/>
+                    <rect class="cam-button" data-cam="3" x="35" y="250" width="100" height="70" fill="transparent" onclick="game.selectCamera(3)"/>
+                    <rect class="cam-button" data-cam="4" x="365" y="250" width="100" height="70" fill="transparent" onclick="game.selectCamera(4)"/>
+                    <rect class="cam-button" data-cam="5" x="190" y="220" width="120" height="65" fill="transparent" onclick="game.selectCamera(5)"/>
+                    <rect class="cam-button" data-cam="6" x="20" y="335" width="80" height="55" fill="transparent" onclick="game.selectCamera(6)"/>
+                    <rect class="cam-button" data-cam="7" x="400" y="335" width="80" height="55" fill="transparent" onclick="game.selectCamera(7)"/>
+                    <rect class="cam-button" data-cam="8" x="190" y="110" width="120" height="65" fill="transparent" onclick="game.selectCamera(8)"/>
+                    <rect class="cam-button" data-cam="9" x="120" y="80" width="60" height="50" fill="transparent" onclick="game.selectCamera(9)"/>
+                    <rect class="cam-button" data-cam="10" x="320" y="80" width="60" height="50" fill="transparent" onclick="game.selectCamera(10)"/>
+                </svg>
+            </div>
+
+            <!-- кнопка закрытия -->
+            <div class="camera-close" onclick="game.toggleCamera()">
+                <div class="camera-icon">▼</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- экран победы -->
+    <div id="winScreen" class="screen overlay">
+        <div class="result-container win">
+            <img src="win.png" alt="6 AM">
+            <h2>6 AM</h2>
+            <p>Ночь <span id="completedNight">1</span> завершена</p>
+            <button onclick="game.backToMenu()">Продолжить</button>
+        </div>
+    </div>
+
+    <!-- экран поражения -->
+    <div id="loseScreen" class="screen overlay">
+        <div class="jumpscare" id="jumpscare">
+            <img id="jumpscareImg" src="kondrat3.png" alt="">
+            <audio id="jumpscareSound" src="kondrat.mp3"></audio>
+        </div>
+        <div class="result-container lose">
+            <h2>YOU DIED</h2>
+            <p>Ночь <span id="failedNight">1</span></p>
+            <button onclick="game.backToMenu()">Главное меню</button>
+        </div>
+    </div>
+
+    <script src="game.js?v=2.1"></script>
+</body>
+</html>

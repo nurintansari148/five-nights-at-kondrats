@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Five Nights at Kondrat's - Standalone</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+    font-family: 'Courier New', monospace; 
+    background: #000; 
+    color: #0f0; 
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+}
+.screen { 
+    display: none; 
+    width: 100%; 
+    height: 100%; 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+}
+.screen.active { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
+.screen.overlay { background: rgba(0,0,0,0.95); z-index: 100; }
+.auth-container, .menu-container, .shop-container {
+    background: rgba(10, 10, 10, 0.95);
+    border: 3px solid #0f0;
+    border-radius: 15px;
+    padding: 40px;
+    max-width: 500px;
+    text-align: center;
+}
+h1 { color: #0f0; font-size: 28px; margin-bottom: 20px; text-shadow: 0 0 10px #0f0; }
+h2 { color: #0f0; font-size: 20px; margin: 15px 0; }
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: rgba(0, 50, 0, 0.3);
+    border: 2px solid #0f0;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+button {
+    padding: 12px 30px;
+    margin: 10px;
+    background: rgba(0, 100, 0, 0.3);
+    border: 2px solid #0f0;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+button:hover { background: rgba(0, 150, 0, 0.5); box-shadow: 0 0 15px #0f0; }
+button:disabled { opacity: 0.3; cursor: not-allowed; }
+.link { color: #0ff; text-decoration: underline; cursor: pointer; }
+.night-btn {
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    margin: 15px auto;
+}
+.night-btn.completed { border-color: #ff0; color: #ff0; }
+.night-btn.locked { border-color: #555; color: #555; }
+#gameScreen {
+    background: linear-gradient(to bottom, #1a1a1a 0%, #000 100%);
+    animation: flicker 8s infinite;
+}
+@keyframes flicker {
+    0%, 94%, 96%, 98%, 100% { filter: brightness(1); }
+    95% { filter: brightness(0.85); }
+    97% { filter: brightness(0.9); }
+    99% { filter: brightness(0.8); }
+}
+.hud {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 14px;
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0;
+    z-index: 20;
+}
+.hud-center { font-size: 24px; font-weight: bold; }
+.door-controls {
+    position: absolute;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 15;
+}
+.door-controls.left { left: 20px; }
+.door-controls.right { right: 20px; }
+.door-button, .light-button {
+    padding: 15px 25px;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 100px;
+}
+.door-button.active, .light-button.active {
+    background: rgba(200, 50, 50, 0.8);
+    border-color: #f00;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+}
+.camera-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    font-size: 18px;
+    padding: 15px 40px;
+}
+.office-view {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+}
+.doorway-frame {
+    position: absolute;
+    top: 5%;
+    width: 85%;
+    height: 80%;
+    border: 6px solid #333;
+    background: linear-gradient(to bottom, #303030 0%, #050505 100%);
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.95);
+}
+.doorway-frame.left-frame { left: 10%; }
+.doorway-frame.right-frame { right: 10%; }
+.door-visual {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(0deg, #656575 0px, #555565 3px, #303040 6px);
+    transform: translateY(-100%);
+    transition: transform 0.6s ease-out;
+    z-index: 3;
+}
+.door-visual.closed { transform: translateY(0); }
+.door-light {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 2;
+    background: radial-gradient(ellipse 70% 90% at 50% 50%, rgba(255, 250, 220, 0.85) 0%, transparent 100%);
+}
+.kondrat-door {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 300px;
+    background: linear-gradient(to bottom, #5a4a3a 0%, #3a2a1a 50%, #1a0a0a 100%);
+    border-radius: 40% 40% 20% 20%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 4;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+}
+.kondrat-door::before {
+    content: '👁️';
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 80px;
+    animation: blink 3s infinite;
+}
+@keyframes blink {
+    0%, 90%, 92%, 100% { opacity: 1; }
+    91% { opacity: 0; }
+}
+.result-container {
+    text-align: center;
+    padding: 40px;
+    max-width: 600px;
+}
+.result-container h2 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px currentColor;
+}
+.result-container.win h2 { color: #0f0; }
+.result-container.lose h2 { color: #f00; }
+.jumpscare {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.jumpscare.active {
+    display: flex;
+    animation: glitch 0.1s infinite;
+}
+.jumpscare-img {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 40%, #8a7a6a 0%, #5a4a3a 30%, #000 70%);
+    position: relative;
+}
+.jumpscare-img::before {
+    content: '👁️';
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 200px;
+    filter: drop-shadow(0 0 30px #f00);
+}
+@keyframes glitch {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-5px, 5px); }
+    40% { transform: translate(5px, -5px); }
+    60% { transform: translate(-5px, -5px); }
+    80% { transform: translate(5px, 5px); }
+    100% { transform: translate(0, 0); }
+}
+.fnaf1-only { display: block; }
+.fnaf2-only { display: none; }
+body[data-mode="fnaf2"] .fnaf1-only { display: none; }
+body[data-mode="fnaf2"] .fnaf2-only { display: block; }
+.mode-card {
+    border: 3px solid #0f0;
+    padding: 20px;
+    margin: 15px 0;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 10px;
+}
+.mode-card:hover {
+    background: rgba(0, 100, 0, 0.2);
+    box-shadow: 0 0 20px #0f0;
+}
+.mode-card ul {
+    list-style: none;
+    margin-top: 10px;
+    font-size: 14px;
+}
+.mode-card li {
+    margin: 5px 0;
+}
+@media (max-width: 768px) {
+    h1 { font-size: 20px; }
+    button { padding: 10px 20px; font-size: 14px; }
+    .door-controls { bottom: 10px; }
+    .door-button, .light-button { padding: 10px 15px; font-size: 12px; min-width: 80px; }
+}
+    </style>
+</head>
+<body>
+    <!-- авторизация -->
+    <div id="authScreen" class="screen active">
+        <div class="auth-container">
+            <h1>FIVE NIGHTS AT KONDRAT'S</h1>
+            <div id="loginForm">
+                <h2>Вход</h2>
+                <input type="text" id="loginUsername" placeholder="Имя пользователя">
+                <input type="password" id="loginPassword" placeholder="Пароль">
+                <button onclick="game.login()">Войти</button>
+                <p>Нет аккаунта? <span class="link" onclick="game.showRegister()">Зарегистрироваться</span></p>
+            </div>
+            <div id="registerForm" style="display: none;">
+                <h2>Регистрация</h2>
+                <input type="text" id="registerUsername" placeholder="Имя пользователя">
+                <input type="password" id="registerPassword" placeholder="Пароль">
+                <input type="password" id="registerPasswordConfirm" placeholder="Повтори пароль">
+                <button onclick="game.register()">Создать аккаунт</button>
+                <p>Уже есть аккаунт? <span class="link" onclick="game.showLogin()">Войти</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- выбор режима -->
+    <div id="modeSelectScreen" class="screen">
+        <div class="menu-container">
+            <h1>Выбери режим игры</h1>
+            <div class="mode-card" onclick="game.selectMode('fnaf1')">
+                <h2>🚪 FNAF 1</h2>
+                <p>Классический режим</p>
+                <ul>
+                    <li>✓ Двери и свет</li>
+                    <li>✓ 11 камер</li>
+                </ul>
+            </div>
+            <div class="mode-card" onclick="game.selectMode('fnaf2')">
+                <h2>🎭 FNAF 2</h2>
+                <p>Расширенный режим</p>
+                <ul>
+                    <li>✓ Маска Фредди</li>
+                    <li>✓ Музыкальная шкатулка</li>
+                    <li>✓ Фонарик</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- главное меню -->
+    <div id="menuScreen" class="screen">
+        <div class="menu-container">
+            <h1 id="menuTitle">FIVE NIGHTS AT KONDRAT'S</h1>
+            <p id="welcomeText">Добро пожаловать!</p>
+            <div id="nightButtons"></div>
+            <button onclick="game.logout()">Выход</button>
+        </div>
+    </div>
+
+    <!-- игра -->
+    <div id="gameScreen" class="screen">
+        <div class="office-view">
+            <div style="flex:1; position:relative;">
+                <div class="doorway-frame left-frame">
+                    <div id="leftDoor" class="door-visual"></div>
+                    <div id="leftLight" class="door-light"></div>
+                    <div id="kondratLeftDoor" class="kondrat-door"></div>
+                </div>
+            </div>
+            <div style="flex:1.5;"></div>
+            <div style="flex:1; position:relative;">
+                <div class="doorway-frame right-frame">
+                    <div id="rightDoor" class="door-visual"></div>
+                    <div id="rightLight" class="door-light"></div>
+                    <div id="kondratRightDoor" class="kondrat-door"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hud">
+            <div class="hud-left">
+                <div>Power: <span id="powerPercent">100</span>%</div>
+                <div>Usage: <span id="powerUsage">1</span></div>
+            </div>
+            <div class="hud-center">
+                <div id="gameTime">12 AM</div>
+            </div>
+            <div class="hud-right">
+                <div>Night <span id="currentNight">1</span></div>
+            </div>
+        </div>
+
+        <div class="door-controls left fnaf1-only">
+            <button class="door-button" id="leftDoorBtn" onclick="game.toggleDoor('left')">ДВЕРЬ</button>
+            <button class="light-button" id="leftLightBtn" 
+                onmousedown="game.toggleLight('left', true)"
+                onmouseup="game.toggleLight('left', false)"
+                ontouchstart="game.toggleLight('left', true)"
+                ontouchend="game.toggleLight('left', false)">СВЕТ</button>
+        </div>
+
+        <div class="door-controls right fnaf1-only">
+            <button class="door-button" id="rightDoorBtn" onclick="game.toggleDoor('right')">ДВЕРЬ</button>
+            <button class="light-button" id="rightLightBtn"
+                onmousedown="game.toggleLight('right', true)"
+                onmouseup="game.toggleLight('right', false)"
+                ontouchstart="game.toggleLight('right', true)"
+                ontouchend="game.toggleLight('right', false)">СВЕТ</button>
+        </div>
+    </div>
+
+    <!-- победа -->
+    <div id="winScreen" class="screen overlay">
+        <div class="result-container win">
+            <h2>6 AM</h2>
+            <p id="winMessage">Ночь завершена</p>
+            <button onclick="game.backToMenu()">Продолжить</button>
+        </div>
+    </div>
+
+    <!-- поражение -->
+    <div id="loseScreen" class="screen overlay">
+        <div class="jumpscare" id="jumpscare">
+            <div class="jumpscare-img"></div>
+        </div>
+        <div class="result-container lose">
+            <h2>YOU DIED</h2>
+            <p>Ночь <span id="failedNight">1</span></p>
+            <button onclick="game.backToMenu()">Главное меню</button>
+        </div>
+    </div>
+
+<script>
+const game={currentUser:null,currentNight:1,gameMode:'fnaf1',gameActive:!1,gameTime:0,power:100,powerUsage:1,doors:{left:!1,right:!1},lights:{left:!1,right:!1},kondrat:{location:0,phase:1,aiLevel:0,moveTimer:0,atDoor:null,doorAttackTimer:0},gameTimer:null,powerTimer:null,aiTimer:null,nextAiCheck:5e3,init(){const e=localStorage.getItem('fnacCurrentUser');e?(this.currentUser=e,this.gameMode=localStorage.getItem('fnacGameMode')||'fnaf1',this.showMenu()):this.showAuth()},showAuth(){this.hideAllScreens(),document.getElementById('authScreen').classList.add('active')},showLogin(){document.getElementById('loginForm').style.display='block',document.getElementById('registerForm').style.display='none'},showRegister(){document.getElementById('loginForm').style.display='none',document.getElementById('registerForm').style.display='block'},login(){const e=document.getElementById('loginUsername').value.trim(),t=document.getElementById('loginPassword').value;if(!e||!t)return void alert('Заполни все поля');const i=localStorage.getItem('fnac_user_'+e);if(!i)return void alert('Пользователь не найден');const s=JSON.parse(i);s.password!==t?alert('Неверный пароль'):(this.currentUser=e,localStorage.setItem('fnacCurrentUser',e),this.showModeSelect())},register(){const e=document.getElementById('registerUsername').value.trim(),t=document.getElementById('registerPassword').value,i=document.getElementById('registerPasswordConfirm').value;if(!e||!t||!i)return void alert('Заполни все поля');if(e.length<3)return void alert('Имя минимум 3 символа');if(t.length<4)return void alert('Пароль минимум 4 символа');if(t!==i)return void alert('Пароли не совпадают');if(localStorage.getItem('fnac_user_'+e))return void alert('Имя занято');const s={username:e,password:t,progress:{fnaf1:{maxNight:1,completed:[]},fnaf2:{maxNight:1,completed:[]}}};localStorage.setItem('fnac_user_'+e,JSON.stringify(s)),this.currentUser=e,localStorage.setItem('fnacCurrentUser',e),alert('Аккаунт создан!'),this.showModeSelect()},logout(){localStorage.removeItem('fnacCurrentUser'),this.currentUser=null,this.showAuth()},showModeSelect(){this.hideAllScreens(),document.getElementById('modeSelectScreen').classList.add('active')},selectMode(e){this.gameMode=e,localStorage.setItem('fnacGameMode',e),this.showMenu()},showMenu(){this.hideAllScreens(),document.getElementById('menuScreen').classList.add('active');const e=JSON.parse(localStorage.getItem('fnac_user_'+this.currentUser));e.progress||(e.progress={fnaf1:{maxNight:1,completed:[]},fnaf2:{maxNight:1,completed:[]}},localStorage.setItem('fnac_user_'+this.currentUser,JSON.stringify(e))),document.getElementById('welcomeText').textContent=`Добро пожаловать, ${this.currentUser}!`,document.getElementById('menuTitle').textContent='fnaf1'===this.gameMode?"FIVE NIGHTS AT KONDRAT'S":"FIVE NIGHTS AT KONDRAT'S 2";const t=e.progress[this.gameMode],i=document.getElementById('nightButtons');i.innerHTML='';for(let e=1;e<=5;e++){const s=document.createElement('button');s.className='night-btn',s.textContent=`Ночь ${e}`,e<=t.maxNight?(s.onclick=()=>this.startNight(e),t.completed.includes(e)&&(s.classList.add('completed'),s.textContent+=' ✓')):(s.disabled=!0,s.classList.add('locked'),s.textContent+=' 🔒'),i.appendChild(s)}},startNight(e){this.currentNight=e,this.hideAllScreens(),document.getElementById('gameScreen').classList.add('active'),document.getElementById('currentNight').textContent=e,document.body.setAttribute('data-mode',this.gameMode),this.gameActive=!0,this.gameTime=0,this.power=100,this.powerUsage=1,this.doors={left:!1,right:!1},this.lights={left:!1,right:!1};const t=[0,0,1,5,10,15,20];this.kondrat={location:0,phase:1,aiLevel:t[e]||20,baseAiLevel:t[e]||20,moveTimer:0,atDoor:null,doorAttackTimer:0},this.updateUI(),this.renderOffice(),this.startGameLoop()},startGameLoop(){this.gameTimer=setInterval(()=>{if(!this.gameActive)return;this.gameTime+=1;const e=Math.floor(this.gameTime/60);e>=3&&this.kondrat.phase<3?this.kondrat.phase=3:e>=2&&this.kondrat.phase<2&&(this.kondrat.phase=2);const t=Math.floor(.5*e);this.kondrat.aiLevel=Math.min(20,this.kondrat.baseAiLevel+t),this.updateUI(),this.gameTime>=360&&this.win()},1e3),this.powerTimer=setInterval(()=>{if(!this.gameActive||this.power<=0)return;let e=1;this.doors.left&&(e+=1),this.doors.right&&(e+=1),this.lights.left&&(e+=1),this.lights.right&&(e+=1),this.powerUsage=e,this.power-=.015*e,this.power<=0&&(this.power=0,this.powerOutage()),this.updateUI()},100),this.scheduleNextAICheck()},scheduleNextAICheck(){this.nextAiCheck=3e3+4e3*Math.random(),this.aiTimer=setTimeout(()=>{this.gameActive&&(this.updateKondratAI(),this.scheduleNextAICheck())},this.nextAiCheck)},updateKondratAI(){if(this.kondrat.atDoor){this.kondrat.doorAttackTimer++;const e=this.doors[this.kondrat.atDoor];if(e)Math.random()<.75&&(this.kondrat.atDoor=null,this.kondrat.location=[1,2,3,4][Math.floor(4*Math.random())],this.kondrat.doorAttackTimer=0,this.renderOffice());else{if(Math.random()<.05+.03*this.kondrat.doorAttackTimer)return void this.lose()}return}this.kondrat.movementOpportunities++;const e=Math.floor(20*Math.random())+1;if(e<=this.kondrat.aiLevel){const e=this.kondrat.location;let t=null;switch(e){case 0:t=Math.random()<.5?1:8;break;case 1:t=Math.random()<.6?3:5;break;case 2:t=Math.random()<.7?4:7;break;case 3:if(Math.random()<.7)return this.kondrat.atDoor='left',this.kondrat.doorAttackTimer=0,void this.renderOffice();t=6;break;case 4:if(Math.random()<.7)return this.kondrat.atDoor='right',this.kondrat.doorAttackTimer=0,void this.renderOffice();t=7;break;case 5:t=Math.random()<.5?1:3;break;case 6:t=3;break;case 7:t=4;break;case 8:t=Math.random()<.4?3:Math.random()<.7?2:10;break;case 9:t=Math.random()<.5?1:5;break;case 10:t=Math.random()<.5?8:3}null!==t&&(this.kondrat.location=t,(6===t||7===t)&&this.playSound('footsteps'),this.updateCamera())}},toggleDoor(e){this.gameActive&&'fnaf1'===this.gameMode&&this.power>0&&(this.doors[e]=!this.doors[e],this.playSound('door'),document.getElementById(e+'DoorBtn')?.classList.toggle('active',this.doors[e]),document.getElementById(e+'Door')?.classList.toggle('closed',this.doors[e]),this.updateUI())},toggleLight(e,t){if(!this.gameActive||'fnaf1'!==this.gameMode||this.power<=0)return;this.lights[e]=t,t&&this.playSound('light'),document.getElementById(e+'LightBtn')?.classList.toggle('active',this.lights[e]);const i=document.getElementById(e+'Light');i&&(i.style.display='block',i.style.opacity=this.lights[e]?'1':'0');const s=document.getElementById('kondrat'+('left'===e?'Left':'Right')+'Door');s&&(s.style.opacity=this.lights[e]&&this.kondrat.atDoor===e?'1':'0'),this.updateUI()},renderOffice(){const e=document.getElementById('kondratLeftDoor'),t=document.getElementById('kondratRightDoor');e&&(e.style.display=this.lights.left&&'left'===this.kondrat.atDoor&&!this.doors.left?'block':'none'),t&&(t.style.display=this.lights.right&&'right'===this.kondrat.atDoor&&!this.doors.right?'block':'none')},updateUI(){const e=Math.floor(this.gameTime/60),t=e%12||12;document.getElementById('gameTime').textContent=`${t} AM`,document.getElementById('powerPercent').textContent=Math.max(0,Math.ceil(this.power)),document.getElementById('powerUsage').textContent=this.powerUsage},win(){this.gameActive=!1,this.stopTimers();const e=10*this.currentNight,t=JSON.parse(localStorage.getItem('fnac_user_'+this.currentUser));t.progress||(t.progress={fnaf1:{maxNight:1,completed:[]},fnaf2:{maxNight:1,completed:[]}});const i=t.progress[this.gameMode];i.completed.includes(this.currentNight)||(i.completed.push(this.currentNight),t.coins=(t.coins||0)+e),this.currentNight===i.maxNight&&i.maxNight<5&&i.maxNight++,localStorage.setItem('fnac_user_'+this.currentUser,JSON.stringify(t)),document.getElementById('winMessage').innerHTML=`Ты выжил ночь ${this.currentNight}!<br><span style="color:#ff0">+${e} 🪙</span>`,this.hideAllScreens(),document.getElementById('winScreen').classList.add('active')},lose(){this.gameActive=!1,this.stopTimers();const e=document.getElementById('jumpscare');this.hideAllScreens(),document.getElementById('loseScreen').classList.add('active'),e.classList.add('active'),setTimeout(()=>{e.classList.remove('active')},2e3),document.getElementById('failedNight').textContent=this.currentNight},powerOutage(){document.getElementById('officeView').style.filter='brightness(0.1)',setTimeout(()=>{this.gameActive&&this.lose()},5e3+1e4*Math.random())},playSound(e){try{const t=new(window.AudioContext||window.webkitAudioContext),i=t.createOscillator(),s=t.createGain();switch(i.connect(s),s.connect(t.destination),e){case'footsteps':i.frequency.value=100,s.gain.setValueAtTime(.3,t.currentTime),s.gain.exponentialRampToValueAtTime(.01,t.currentTime+.3),i.start(t.currentTime),i.stop(t.currentTime+.3);break;case'door':i.frequency.value=150,s.gain.setValueAtTime(.4,t.currentTime),s.gain.exponentialRampToValueAtTime(.01,t.currentTime+.6),i.start(t.currentTime),i.stop(t.currentTime+.6);break;case'light':i.frequency.value=800,s.gain.setValueAtTime(.2,t.currentTime),s.gain.exponentialRampToValueAtTime(.01,t.currentTime+.1),i.start(t.currentTime),i.stop(t.currentTime+.1)}}catch(e){}},backToMenu(){this.stopTimers(),this.showMenu()},stopTimers(){this.gameTimer&&clearInterval(this.gameTimer),this.powerTimer&&clearInterval(this.powerTimer),this.aiTimer&&clearTimeout(this.aiTimer)},hideAllScreens(){document.querySelectorAll('.screen').forEach(e=>{e.classList.remove('active')})}};window.addEventListener('load',()=>{game.init()});
+</script>
+</body>
+</html>

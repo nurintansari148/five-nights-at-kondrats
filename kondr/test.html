@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+    <h1>Тест JavaScript</h1>
+    <input type="text" id="testInput" placeholder="Введи имя">
+    <button onclick="testFunction()">Тест</button>
+    <div id="result"></div>
+
+    <script>
+        function testFunction() {
+            console.log('testFunction вызвана');
+            const value = document.getElementById('testInput').value;
+            console.log('Значение:', value);
+            document.getElementById('result').textContent = 'Работает! Значение: ' + value;
+            alert('Кнопка работает! Значение: ' + value);
+        }
+        
+        console.log('Скрипт загружен');
+    </script>
+</body>
+</html>

@@ -9,12 +9,13 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Five Nights at Kondrat's v2.2</title>
+    <title>Five Nights at Kondrat's v2.4</title>
     <style>
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -24,9 +25,11 @@ body {
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
     width: 100vw;
     height: 100vh;
     position: fixed;
+    touch-action: manipulation;
 }
 
 /* фикс масштабирования */
@@ -139,9 +142,12 @@ html {
     transition: all 0.3s;
     text-shadow: 0 0 10px rgba(255, 100, 100, 0.8);
     box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.auth-container button:hover {
+.auth-container button:hover,
+.auth-container button:active {
     background: linear-gradient(180deg, #4a0000 0%, #2a0000 100%);
     border-color: #ff0000;
     box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
@@ -2140,9 +2146,12 @@ button, input {
     width: 250px;
     cursor: pointer;
     transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.mode-card:hover {
+.mode-card:hover,
+.mode-card:active {
     border-color: #ffd700;
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
@@ -2253,17 +2262,17 @@ button, input {
             <div id="loginForm">
                 <h2>Вход</h2>
                 <input type="text" id="loginUsername" placeholder="Имя пользователя">
-                <input type="password" id="loginPassword" placeholder="Пароль" onkeypress="if(event.key === 'Enter') game.login()">
-                <button onclick="game.login()">Войти</button>
-                <p>Нет аккаунта? <span class="link" onclick="game.showRegister()">Зарегистрироваться</span></p>
+                <input type="password" id="loginPassword" placeholder="Пароль">
+                <button id="loginBtn">Войти</button>
+                <p>Нет аккаунта? <span class="link" id="showRegisterLink">Зарегистрироваться</span></p>
             </div>
             <div id="registerForm" style="display: none;">
                 <h2>Регистрация</h2>
                 <input type="text" id="registerUsername" placeholder="Имя пользователя">
                 <input type="password" id="registerPassword" placeholder="Пароль">
-                <input type="password" id="registerPasswordConfirm" placeholder="Повтори пароль" onkeypress="if(event.key === 'Enter') game.register()">
-                <button onclick="game.register()">Создать аккаунт</button>
-                <p>Уже есть аккаунт? <span class="link" onclick="game.showLogin()">Войти</span></p>
+                <input type="password" id="registerPasswordConfirm" placeholder="Повтори пароль">
+                <button id="registerBtn">Создать аккаунт</button>
+                <p>Уже есть аккаунт? <span class="link" id="showLoginLink">Войти</span></p>
             </div>
         </div>
     </div>
@@ -2275,7 +2284,7 @@ button, input {
             <p style="font-size: 20px; margin-bottom: 30px;">Выбери режим игры:</p>
             
             <div class="mode-buttons">
-                <div class="mode-card" onclick="game.selectMode('fnaf1')">
+                <div class="mode-card" data-mode="fnaf1">
                     <h2>🚪 FNAF 1</h2>
                     <p>Классический режим</p>
                     <ul>
@@ -2285,7 +2294,7 @@ button, input {
                     </ul>
                 </div>
                 
-                <div class="mode-card" onclick="game.selectMode('fnaf2')">
+                <div class="mode-card" data-mode="fnaf2">
                     <h2>🎭 FNAF 2</h2>
                     <p>Расширенный режим</p>
                     <ul>
@@ -2315,9 +2324,9 @@ button, input {
             <p class="menu-hint">12 AM - 6 AM<br>Выживи 6 часов</p>
             
             <div class="menu-actions">
-                <button onclick="game.openShop()" class="shop-btn">🛒 Магазин</button>
-                <button onclick="game.showModeSelect()" class="mode-btn">🎮 Сменить режим</button>
-                <button onclick="game.logout()" class="logout-btn">Выход</button>
+                <button id="openShopBtn" class="shop-btn">🛒 Магазин</button>
+                <button id="changeModeBtn" class="mode-btn">🎮 Сменить режим</button>
+                <button id="logoutBtn" class="logout-btn">Выход</button>
             </div>
         </div>
     </div>
@@ -2343,14 +2352,14 @@ button, input {
                             <div class="stat">⚡ +10% к энергии</div>
                             <div class="stat owned-indicator" id="goodmanOwned" style="display: none;">✓ Куплено</div>
                         </div>
-                        <button class="buy-btn" id="buyGoodmanBtn" onclick="game.buyItem('goodmanHelp')">
+                        <button class="buy-btn" id="buyGoodmanBtn" data-item="goodmanHelp">
                             Купить за <span class="coin-icon">🪙</span>50
                         </button>
                     </div>
                 </div>
             </div>
             
-            <button onclick="game.closeShop()" class="close-shop-btn">Закрыть</button>
+            <button id="closeShopBtn" class="close-shop-btn">Закрыть</button>
         </div>
     </div>
 
@@ -2721,7 +2730,7 @@ button, input {
             <img src="win.png" alt="6 AM">
             <h2>6 AM</h2>
             <p>Ночь <span id="completedNight">1</span> завершена</p>
-            <button onclick="game.backToMenu()">Продолжить</button>
+            <button id="winContinueBtn">Продолжить</button>
         </div>
     </div>
 
@@ -2734,10 +2743,10 @@ button, input {
         <div class="result-container lose">
             <h2>YOU DIED</h2>
             <p>Ночь <span id="failedNight">1</span></p>
-            <button onclick="game.backToMenu()">Главное меню</button>
+            <button id="loseMenuBtn">Главное меню</button>
         </div>
     </div>
 
-    <script src="game.js?v=2.2"></script>
+    <script src="game.js?v=2.4"></script>
 </body>
 </html>
